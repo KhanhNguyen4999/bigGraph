@@ -5,11 +5,23 @@ class INode:
 
 
 class GNode:
+    """
+    Class structure store information of internal node in the graph include:
+    - Node index
+    - List of edge start from that node
+    
+    (Graph will become network if it comes with data)
+    """
     def __init__(self, idx):
         self.lsOutDeg = None
         self.idx = idx
     
-    def addEdge(self, idxDstNode):
+    def insert_edge(self, idxDstNode):
+        """
+        Inserting new edge actually save dstNode as new neighbor
+        params:
+            - idxDstNode: destination node
+        """
         pI = INode(idxDstNode)
         if self.lsOutDeg == None:
             self.lsOutDeg = pI
@@ -30,7 +42,12 @@ class GNode:
                 p_prev = p_curr
                 p_curr = p_curr.next
 
-    def removeEdge(self, idxDstNode):
+    def remove_edge(self, idxDstNode):
+        """
+        Removing edge actually delete destination node's idx from list neighbor
+        params:
+            - idxDstNode: destination node
+        """
         if self.lsOutDeg == None:
             return 
         
@@ -46,7 +63,10 @@ class GNode:
                 p_prev = p_curr
                 p_curr = p_curr.next
     
-    def isEdgeExist(self, idxNode):
+    def is_edge_exist(self, idxNode):
+        """
+        Check whether idxNode is the neighbor or not
+        """
         head = self.lsOutDeg
         if head == None:
             return False
