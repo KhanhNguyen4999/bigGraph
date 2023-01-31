@@ -1,5 +1,6 @@
 from node import *
 import copy
+import pickle
 
 class Graph:
 
@@ -65,11 +66,14 @@ class Graph:
     # def get_sub_graph_by_edge(self, s_nodeIdx, e_nodeIdx) -> None:
     #     raise NotImplementedError
 
-    # def load_graph(self) -> None:
-    #     None
+    def load_graph(self, fPklName) -> None:
+        with open(fPklName, 'rb') as inp:
+            self.nodes = pickle.load(inp)
 
-    # def save_graph(self) -> None:
-    #     None
+
+    def save_graph(self, fPklName) -> None:
+        with open(fPklName, 'wb') as outp:
+            pickle.dump(self.nodes, outp, pickle.HIGHEST_PROTOCOL)
 
     def show_graph(self) -> None:
         raise NotImplementedError
@@ -227,3 +231,8 @@ if __name__ == "__main__":
     tungraph = tungraph.get_sub_graph_by_node(['kiệt', 'no', 'ppp'])
     tungraph.show_graph()
 
+    # check save and load method
+    tungraph.save_graph("graph.pkl")
+    loadGraph = TUNGraph()
+    loadGraph.load_graph("graph.pkl")
+    loadGraph.show_graph()
