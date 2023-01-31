@@ -1,12 +1,13 @@
 from node import *
+import copy
 
 class Graph:
 
-    def __init__(self):
+    def __init__(self, nodes={}):
         """
         node to list of neighbors in the graph by hashtable (dict/dictionary)
         """
-        self.nodes = []
+        self.nodes = nodes
     
     def insert_node(self, nodeIdx) -> None:
         '''
@@ -15,7 +16,7 @@ class Graph:
         if self.is_node_exist(nodeIdx):
             return 
         else:
-            self.nodes.append(GNode(nodeIdx))
+            self.nodes[nodeIdx] = GNode(nodeIdx)
     
     def insert_egde(self, s_nodeIdx, e_nodeIdx) -> None:
         raise NotImplementedError
@@ -28,67 +29,80 @@ class Graph:
         """
         if self.is_node_exist(nodeIdx):
             # Step 1
-            for gnode in self.nodes:
-                if gnode.idx != nodeIdx:
+            for idx in self.nodes:
+                if idx != nodeIdx:
+                    gnode = self.nodes[idx]
                     if gnode.is_edge_exist(nodeIdx):
                         gnode.remove_edge(nodeIdx)
             
             # Step 2
-            for i, gnode in enumerate(self.nodes):
-                if gnode.idx == nodeIdx:
-                    self.nodes.remove(i)
-                    break 
+            del self.nodes[nodeIdx]
 
     def remove_edge(self, s_nodeIdx, e_nodeIdx) -> None:
         raise NotImplementedError
 
-    # def getSubGraphByNode(self, nodeIdx) -> None:
+    def get_sub_graph_by_node(self, ls_nodeIdx):
+        """
+        Get a subgraph by list of nodeIdx
+        """
+        # Get all nodes in list node idx from graph to construct subgraph
+        nodes = {}
+        for idx in self.nodes:
+            if idx in ls_nodeIdx:
+                nodes[idx] = copy.deepcopy(self.nodes[idx])
+
+        subgraph = self.__class__(nodes)
+
+        # Remove all edge point to node not in list node idx
+        edges = subgraph.get_edges()
+        for s_nodeIdx, e_nodeIdx in edges:
+            if e_nodeIdx not in ls_nodeIdx:
+                subgraph.remove_edge(s_nodeIdx, e_nodeIdx)
+
+        return subgraph
+
+
+    # def get_sub_graph_by_edge(self, s_nodeIdx, e_nodeIdx) -> None:
     #     raise NotImplementedError
 
-    # def getSubGraphByEdge(self, s_nodeIdx, e_nodeIdx) -> None:
-    #     raise NotImplementedError
-
-    # def loadGraph(self) -> None:
+    # def load_graph(self) -> None:
     #     None
 
-    # def saveGraph(self) -> None:
+    # def save_graph(self) -> None:
     #     None
+
+    def show_graph(self) -> None:
+        raise NotImplementedError
 
     def is_node_exist(self, nodeIdx) -> bool:
         """
         Check whether node exist in the graph or not
         """
-        for gnode in self.nodes:
-            if gnode.idx == nodeIdx:
-                return True
-        return False
+        return nodeIdx in self.nodes
 
-    def nodes(self) -> None:
+    def get_nodes(self) -> None:
         """
         Get all nodes in the graph
         """
-        nodes = []
-        for gnode in self.nodes:
-            nodes.append(gnode.idx)
-        return nodes
+        return list(self.nodes.values())
     
-    def edges(self) -> None:
+    def get_edges(self) -> None:
         """
         Get all edges in the graph
         """
         edges = []
-        for gnode in self.nodes:
-            head = gnode.lsOutDeg
+        for nodeIdx in self.nodes:
+            head = self.nodes[nodeIdx].lsOutDeg
             while head:
-                edges.append((gnode.idx, head.value))
+                edges.append((nodeIdx, head.value))
                 head = head.next
         return edges
     
 
 # Directed Graph
 class TNGraph(Graph):
-    def __init__(self):
-        super(TNGraph, self).__init__()
+    def __init__(self, nodes={}):
+        super(TNGraph, self).__init__(nodes) 
     
     def insert_edge(self, s_nodeIdx, e_nodeIdx) -> None:
         """
@@ -98,10 +112,8 @@ class TNGraph(Graph):
             - e_nodeIdx: node that edge pointer to
         The s_node will store e_node as new neighbor node
         """
-        for gnode in self.nodes:
-            if gnode.idx == s_nodeIdx:
-                gnode.insert_edge(e_nodeIdx)
-                break 
+        if self.is_node_exist(s_nodeIdx) and self.is_node_exist(e_nodeIdx):
+            self.nodes[s_nodeIdx].insert_edge(e_nodeIdx)
     
     def remove_edge(self, s_nodeIdx, e_nodeIdx) -> None:
         """
@@ -111,16 +123,24 @@ class TNGraph(Graph):
             - e_nodeIdx: node that edge pointer to
         Remove e_node from s_node's neighbor list
         """
-        for gnode in self.nodes:
-            if gnode.idx == s_nodeIdx:
-                gnode.remove_edge(e_nodeIdx)
-                break 
+        if self.is_node_exist(s_nodeIdx):
+            self.nodes[s_nodeIdx].remove_edge(e_nodeIdx)
+
+    def show_graph(self) -> None:
+        ls_edges = self.get_edges()
+        ls_edges = list(sorted(ls_edges))
+
+        print("### List edge from directed graph ###")
+        for edge in ls_edges:
+            print("{} -> {}".format(edge[0], edge[1]))
+        print("#####################################\n")
+
 
 
 # Undirected graph
 class TUNGraph(Graph):
-    def __init__(self):
-        super(TUNGraph, self).__init__()
+    def __init__(self, nodes={}):
+        super(TUNGraph, self).__init__(nodes)
 
     def insert_edge(self, s_nodeIdx, e_nodeIdx) -> None:
         """
@@ -130,12 +150,9 @@ class TUNGraph(Graph):
             - e_nodeIdx: node that edge pointer to
         The s_node will store e_node as new neighbor node and vice versa
         """
-        for gnode in self.nodes:
-            if gnode.idx == s_nodeIdx:
-                gnode.insert_edge(e_nodeIdx)
-
-            if gnode.idx == e_nodeIdx:
-                gnode.insert_edge(s_nodeIdx)
+        if self.is_node_exist(s_nodeIdx) and self.is_node_exist(e_nodeIdx):
+            self.nodes[s_nodeIdx].insert_edge(e_nodeIdx)
+            self.nodes[e_nodeIdx].insert_edge(s_nodeIdx)
                 
     def remove_edge(self, s_nodeIdx, e_nodeIdx) -> None:
         """
@@ -145,12 +162,21 @@ class TUNGraph(Graph):
             - e_nodeIdx: node that edge pointer to
         Remove e_node from s_node's neighbor list and vice versa
         """
-        for gnode in self.nodes:
-            if gnode.idx == s_nodeIdx:
-                gnode.remove_edge(e_nodeIdx)
+        if self.is_node_exist(s_nodeIdx):
+            self.nodes[s_nodeIdx].remove_edge(e_nodeIdx)
 
-            if gnode.idx == e_nodeIdx:
-                gnode.remove_edge(s_nodeIdx)
+        if self.is_node_exist(e_nodeIdx):
+            self.nodes[e_nodeIdx].remove_edge(s_nodeIdx)
+
+    def show_graph(self) -> None:
+        ls_edges = self.get_edges()
+        ls_edges = list(set(tuple(sorted(edge)) for edge in ls_edges))
+        ls_edges = list(sorted(ls_edges))
+
+        print("### List edge from undirected graph ###")
+        for edge in ls_edges:
+            print("{} - {}".format(edge[0], edge[1]))
+        print("#######################################\n")
 
 if __name__ == "__main__":
     
@@ -175,27 +201,29 @@ if __name__ == "__main__":
     tngraph.insert_edge(5,2)
 
     tngraph.remove_node(0)
-    ls_edges = tngraph.edges()
-    print("List edge from directed graph")
-    for edge in ls_edges:
-        print("{} -> {}".format(edge[0], edge[1]))
+    tngraph.show_graph()
+
+    subgraph = tngraph.get_sub_graph_by_node([0,1,2])
+    subgraph.show_graph()
 
     # Create Undirected graph
     tungraph = TUNGraph()
-    tungraph.insert_node(0)
-    tungraph.insert_node(1)
-    tungraph.insert_node(2)
-    tungraph.insert_node(3)
-    tungraph.insert_node(4)
-    tungraph.insert_node(5)
+    tungraph.insert_node('ppp')
+    tungraph.insert_node('ade')
+    tungraph.insert_node('xyz')
+    tungraph.insert_node('ik')
+    tungraph.insert_node('kiệt')
+    tungraph.insert_node('no')
 
-    tungraph.insert_edge(0,1)
-    tungraph.insert_edge(1,2)
-    tungraph.insert_edge(2,3)
-    tungraph.insert_edge(3,4)
-    tungraph.insert_edge(4,5)
-    tungraph.insert_edge(5,0)
-    ls_edges = tungraph.edges()
-    print("List edge from undirected graph")
-    for edge in ls_edges:
-        print("{} -> {}".format(edge[0], edge[1]))
+    tungraph.insert_edge('ppp','ade')
+    tungraph.insert_edge('ade','xyz')
+    tungraph.insert_edge('xyz','ik')
+    tungraph.insert_edge('ik','kiệt')
+    tungraph.insert_edge('kiệt','no')
+    tungraph.insert_edge('no','ppp')
+
+    tungraph.show_graph()
+
+    tungraph = tungraph.get_sub_graph_by_node(['kiệt', 'no', 'ppp'])
+    tungraph.show_graph()
+
