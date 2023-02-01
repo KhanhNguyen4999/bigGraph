@@ -78,5 +78,5 @@ class GNode:
 
         return False
 
-    def __eq__(self, idxNode):
-        return self.idx == idxNode
+    def __eq__(self, other):
+        return self.idx == other.idx

@@ -4,16 +4,20 @@ import pickle
 
 class Graph:
 
-    def __init__(self, nodes={}):
+    def __init__(self, nodes={}, value_type=int):
         """
         node to list of neighbors in the graph by hashtable (dict/dictionary)
         """
         self.nodes = nodes
+        self.value_type = value_type
     
     def insert_node(self, nodeIdx) -> None:
         '''
         Insert a node with node index into the graph    
         '''
+        if type(nodeIdx) != self.value_type:
+            raise TypeError("Wrong value type: type(nodeIdx) != self.value_type")
+
         if self.is_node_exist(nodeIdx):
             return 
         else:
@@ -52,7 +56,7 @@ class Graph:
             if idx in ls_nodeIdx:
                 nodes[idx] = copy.deepcopy(self.nodes[idx])
 
-        subgraph = self.__class__(nodes)
+        subgraph = self.__class__(nodes, self.value_type)
 
         # Remove all edge point to node not in list node idx
         edges = subgraph.get_edges()
@@ -68,7 +72,12 @@ class Graph:
 
     def load_graph(self, fPklName) -> None:
         with open(fPklName, 'rb') as inp:
-            self.nodes = pickle.load(inp)
+            nodes = pickle.load(inp)
+        
+        if len(nodes.keys()) > 0 and type(list(nodes.keys())[0]) != self.value_type:
+            raise TypeError("Wrong value type: type(list(nodes.keys())[0]) != self.value_type")
+
+        self.nodes = nodes
 
 
     def save_graph(self, fPklName) -> None:
@@ -105,8 +114,8 @@ class Graph:
 
 # Directed Graph
 class TNGraph(Graph):
-    def __init__(self, nodes={}):
-        super(TNGraph, self).__init__(nodes) 
+    def __init__(self, nodes={}, value_type=int):
+        super(TNGraph, self).__init__(nodes, value_type) 
     
     def insert_edge(self, s_nodeIdx, e_nodeIdx) -> None:
         """
@@ -143,8 +152,8 @@ class TNGraph(Graph):
 
 # Undirected graph
 class TUNGraph(Graph):
-    def __init__(self, nodes={}):
-        super(TUNGraph, self).__init__(nodes)
+    def __init__(self, nodes={}, value_type=int):
+        super(TUNGraph, self).__init__(nodes, value_type)
 
     def insert_edge(self, s_nodeIdx, e_nodeIdx) -> None:
         """
@@ -211,7 +220,7 @@ if __name__ == "__main__":
     subgraph.show_graph()
 
     # Create Undirected graph
-    tungraph = TUNGraph()
+    tungraph = TUNGraph(value_type=str)
     tungraph.insert_node('ppp')
     tungraph.insert_node('ade')
     tungraph.insert_node('xyz')
@@ -233,6 +242,7 @@ if __name__ == "__main__":
 
     # check save and load method
     tungraph.save_graph("graph.pkl")
-    loadGraph = TUNGraph()
+    loadGraph = TUNGraph(value_type=str)
     loadGraph.load_graph("graph.pkl")
     loadGraph.show_graph()
+
